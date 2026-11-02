@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: uv sync --all-extras --locked
+      - run: uv run python scripts/generate.py --check
+      - run: uv run ruff check .
+      - run: uv run mypy
+      - run: uv run pytest -q
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Tag matches package version
+        run: |
+          version=$(uv run --no-dev python -c "import slidecold; print(slidecold.__version__)")
+          test "v$version" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME != version $version"; exit 1; }
+      - run: uv build
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # To switch to trusted publishing: on pypi.org add a trusted publisher for project `slidecold`
+          # (owner slidecold, repo slidecold-python, workflow release.yml), then delete this `password`
+          # line and the PYPI_TOKEN secret. `id-token: write` is already granted above.
+          password: ${{ secrets.PYPI_TOKEN }}
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --generate-notes
