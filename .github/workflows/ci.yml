@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
-      - run: uv sync --all-extras --locked
+      - run: uv sync --locked
       - name: Generated code is up to date with openapi.yaml
         run: uv run python scripts/generate.py --check
       - run: uv run ruff check .

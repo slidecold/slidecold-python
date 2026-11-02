@@ -27,7 +27,7 @@ class Operation(NamedTuple):
     body: Optional[str]  # None, 'json', 'multipart' or 'json_or_multipart'
     body_required: bool
     body_schema: Optional[Dict[str, Any]]
-    body_flat: bool  # MCP: body properties are top-level tool arguments
+    body_flat: bool  # body properties can be passed as top-level arguments
     file_field: Optional[str]  # multipart field name for the uploaded file
     destructive: bool
 

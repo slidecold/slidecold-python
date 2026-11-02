@@ -1,19 +1,18 @@
-# SlideCold Python SDK, CLI and MCP server
+# SlideCold Python SDK
 
-The official Python client for the [SlideCold](https://slidecold.com) API (Instagram cold-DM outreach).
-One package gives you:
+The official Python client for the [SlideCold](https://slidecold.com) API (Instagram cold-DM outreach):
+`SlideCold` and `AsyncSlideCold` clients with typed methods for every API operation, generated from the
+[OpenAPI spec](openapi.yaml).
 
-- **SDK**: `SlideCold` and `AsyncSlideCold` clients with typed methods for every API operation.
-- **CLI**: `slidecold campaigns list`, `slidecold audiences export <id>`, and so on.
-- **MCP server**: `slidecold-mcp`, which gives Claude, Cursor and other MCP clients one tool per API operation.
+Looking for a command line or an MCP server? They live in their own repos:
 
-Everything is generated from the [OpenAPI spec](openapi.yaml), so the SDK, the CLI and the MCP tools always match the API.
+- **CLI**: [slidecold/slidecold-cli](https://github.com/slidecold/slidecold-cli) (`slidecold login`, `slidecold campaigns list`, ...)
+- **MCP server**: [slidecold/slidecold-mcp](https://github.com/slidecold/slidecold-mcp) (`npx -y slidecold-mcp`)
 
 ## Install
 
 ```bash
-pip install slidecold            # SDK and CLI (Python 3.9+, the only dependency is httpx)
-pip install 'slidecold[mcp]'     # also the MCP server (Python 3.10+)
+pip install slidecold    # Python 3.9+, the only dependency is httpx
 ```
 
 Create an API key at <https://slidecold.com/settings>. Keys look like `cs_...`.
@@ -22,14 +21,15 @@ Create an API key at <https://slidecold.com/settings>. Keys look like `cs_...`.
 
 The API key is resolved in this order:
 
-1. the `api_key=` argument (or `--api-key` on the CLI)
+1. the `api_key=` argument
 2. the `SLIDECOLD_API_KEY` environment variable
-3. the config file written by `slidecold login`: `~/.config/slidecold/config.json`
+3. the config file written by `slidecold login` from [slidecold-cli](https://github.com/slidecold/slidecold-cli):
+   `~/.config/slidecold/config.json`
    (`$XDG_CONFIG_HOME/slidecold/config.json` if set, `%APPDATA%\slidecold\config.json` on Windows)
 
 The base URL follows the same order (`base_url=`, `SLIDECOLD_BASE_URL`, config `baseUrl`), then defaults to
-`https://slidecold.com/api/v1`. The config file is `{"apiKey": "cs_...", "baseUrl": "..."}`, the same format
-the SlideCold Node and Go CLIs use.
+`https://slidecold.com/api/v1`. The config file is `{"apiKey": "cs_...", "baseUrl": "..."}`. The SDK only reads
+it; it never writes it.
 
 ## SDK quickstart
 
@@ -101,8 +101,7 @@ its OpenAPI `operationId`.
 
 Each API key has scopes of the form `<resource>:<read|write>` for `accounts`, `audiences`, `campaigns` and
 `conversations`. A `:write` scope also grants `:read`. Proxies use the `accounts` scopes. The scope for each
-operation is shown in method docstrings, in `slidecold <resource> <action> --help`, and in each MCP tool's
-description.
+operation is shown in its method docstring.
 
 ## Errors
 
@@ -146,68 +145,10 @@ def slidecold_webhook():
     ...
 ```
 
-## CLI
-
-```bash
-slidecold login                      # prompts for the key, checks it, saves it (0600)
-slidecold login --key cs_...         # non-interactive
-slidecold logout
-
-slidecold campaigns list
-slidecold campaigns list --archived true
-slidecold campaigns get cmp_123
-slidecold campaigns stats cmp_123
-slidecold campaigns create --data '{"name": "Spring", "audienceIds": ["aud_1"], "accountIds": ["acc_1"], "templates": [{"body": "Hi!"}]}'
-slidecold campaigns update cmp_123 --data @patch.json
-slidecold audiences list-members aud_1 --min-followers 1000 --limit 50
-slidecold audiences export aud_1 > members.csv
-slidecold audiences import-members aud_1 --file members.csv
-slidecold conversations send-photo conv_1 --file offer.jpg
-slidecold accounts login-status --job-id job_1
-```
-
-The shape is `slidecold <resource> <action> [ids] [--param value] [--data JSON | --data @file.json] [--file path]`.
-Run `slidecold --help`, `slidecold campaigns --help` or `slidecold campaigns create --help` (which shows the
-required scope). Output is pretty-printed JSON, or raw CSV for exports. Errors go to stderr with exit code 1.
-`--api-key` and `--base-url` override the key and URL for one command.
-
-## MCP server
-
-`slidecold-mcp` is a stdio MCP server with one tool per API operation (`list_campaigns`,
-`get_campaign_stats`, `send_conversation_reply`, ...). Read-only tools are marked `readOnlyHint`, and deletes
-and DM sends are marked `destructiveHint`. Upload tools take a local `file_path`.
-
-**Claude Code**
-
-```bash
-claude mcp add slidecold -e SLIDECOLD_API_KEY=cs_... -- uvx --from 'slidecold[mcp]' slidecold-mcp
-```
-
-**Claude Desktop** (`claude_desktop_config.json`)
-
-```json
-{
-  "mcpServers": {
-    "slidecold": {
-      "command": "uvx",
-      "args": ["--from", "slidecold[mcp]", "slidecold-mcp"],
-      "env": { "SLIDECOLD_API_KEY": "cs_..." }
-    }
-  }
-}
-```
-
-**Cursor** (`~/.cursor/mcp.json` or `.cursor/mcp.json` in a project) uses the same `mcpServers` block as
-Claude Desktop.
-
-If you ran `slidecold login`, you can leave out `SLIDECOLD_API_KEY` and the server will use the saved key.
-Give the server a key with only the scopes you want the assistant to have, for example `campaigns:read` and
-`conversations:read` for a read-only assistant.
-
 ## Development
 
 ```bash
-uv sync --all-extras
+uv sync
 uv run python scripts/generate.py          # regenerate from openapi.yaml
 uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run pytest
 ```

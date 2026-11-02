@@ -63,7 +63,7 @@ class Gen:
         return obj
 
     def inline(self, schema: Any) -> Any:
-        """Resolve every $ref so the schema is self-contained (for MCP input schemas)."""
+        """Resolve every $ref so the schema is self-contained (for self-contained schemas in OPERATIONS)."""
         if isinstance(schema, dict):
             if "$ref" in schema:
                 return self.inline(self.deref(schema))
@@ -279,7 +279,7 @@ class Gen:
             + "    path_params: Tuple[Param, ...]\n    query_params: Tuple[Param, ...]\n"
             + "    body: Optional[str]  # None, 'json', 'multipart' or 'json_or_multipart'\n"
             + "    body_required: bool\n    body_schema: Optional[Dict[str, Any]]\n"
-            + "    body_flat: bool  # MCP: body properties are top-level tool arguments\n"
+            + "    body_flat: bool  # body properties can be passed as top-level arguments\n"
             + "    file_field: Optional[str]  # multipart field name for the uploaded file\n"
             + "    destructive: bool\n\n\n"
             + "# Resource name -> description, from the OpenAPI tags.\n"

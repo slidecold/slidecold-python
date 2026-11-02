@@ -1,9 +1,6 @@
 import json
 import os
-import stat
 import types
-
-import pytest
 
 from slidecold import DEFAULT_BASE_URL, SlideCold, _config
 
@@ -42,10 +39,3 @@ def test_invalid_config_is_ignored():
     path.parent.mkdir(parents=True)
     path.write_text("{not json")
     assert _config.load_config() == {}
-
-
-@pytest.mark.skipif(os.name == "nt", reason="POSIX permissions")
-def test_save_config_is_private():
-    path = _config.save_config({"apiKey": "cs_x"})
-    assert stat.S_IMODE(path.stat().st_mode) == 0o600
-    assert json.loads(path.read_text()) == {"apiKey": "cs_x"}

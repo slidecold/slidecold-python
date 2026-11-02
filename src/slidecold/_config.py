@@ -1,4 +1,4 @@
-"""API key and base URL resolution, shared with the Node and Go CLIs (`config.json`: {"apiKey", "baseUrl"})."""
+"""API key and base URL resolution, read from the config file `slidecold login` (Go CLI) writes (`config.json`: {"apiKey", "baseUrl"})."""
 
 import json
 import os
@@ -22,18 +22,6 @@ def load_config() -> Dict[str, Any]:
     except (OSError, ValueError):
         return {}
     return data if isinstance(data, dict) else {}
-
-
-def save_config(data: Dict[str, Any]) -> Path:
-    """Write the config file readable only by the current user (0600)."""
-    path = config_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-        f.write("\n")
-    os.chmod(path, 0o600)  # the file may have existed with wider permissions
-    return path
 
 
 def resolve(api_key: Optional[str] = None, base_url: Optional[str] = None) -> Tuple[Optional[str], str]:

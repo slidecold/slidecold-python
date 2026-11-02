@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0
+
+This package is now the SDK only.
+
+- The `slidecold` CLI moved to [slidecold-cli](https://github.com/slidecold/slidecold-cli) (Go). Its
+  `slidecold login` writes the same `~/.config/slidecold/config.json`, which the SDK still reads.
+- The `slidecold-mcp` MCP server moved to [slidecold-mcp](https://github.com/slidecold/slidecold-mcp)
+  (TypeScript, `npx -y slidecold-mcp`). The `[mcp]` extra is gone; `pip install 'slidecold[mcp]'` now installs
+  only the SDK.
+- Removed the `slidecold` and `slidecold-mcp` console scripts and the internal `_config.save_config`.
+
 ## 0.1.0
 
 Initial release.
